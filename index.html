@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>אתגר הכדורסל - טרום ליגה</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --orange: #F97924; --black: #1A1A1A; --white: #FFFFFF;
+            --gray: #F8F9FA; --red: #ff4757; --gold: #FFD700;
+            --silver: #C0C0C0; --bronze: #CD7F32; --green: #2ecc71;
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--gray); margin: 0; padding: 0; overflow-x: hidden; color: var(--black); }
+        .container { width: 100%; max-width: 500px; margin: 0 auto; padding: 15px; box-sizing: border-box; min-height: 100vh; }
+
+        /* LOGO */
+        .logo-container { text-align: center; margin-bottom: 15px; padding-top: 10px; animation: bounceIn 0.8s; }
+        .club-logo { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--orange); box-shadow: 0 10px 20px rgba(249,121,36,0.2); background: white; }
+        .club-label { color: var(--black); font-weight: 900; font-size: 18px; margin-top: 10px; }
+        @keyframes bounceIn { 0%{transform:scale(0.3);opacity:0} 50%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
+
+        h1 { color: var(--orange); text-align: center; margin-bottom: 5px; font-size: 26px; font-weight: 900; }
+        .card { background: var(--white); padding: 25px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); margin-bottom: 20px; text-align: center; border: 1px solid rgba(249,121,36,0.1); position: relative; }
+
+        /* PODIUM */
+        .podium { display: flex; justify-content: center; align-items: flex-end; gap: 8px; height: 160px; margin: 20px 0; }
+        .podium-item { display: flex; flex-direction: column; align-items: center; width: 33%; animation: podiumRise 0.6s ease-out backwards; }
+        .podium-item:nth-child(1){animation-delay:0.1s} .podium-item:nth-child(2){animation-delay:0s} .podium-item:nth-child(3){animation-delay:0.2s}
+        @keyframes podiumRise { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+        .podium-box { width: 100%; border-radius: 15px 15px 5px 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-weight: bold; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .podium-name { font-size: 10px; color: var(--black); font-weight: 800; margin-bottom: 6px; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .rank-1 { height: 110px; background: linear-gradient(135deg, #FFD700, #F39C12); border: 2px solid #D4AF37; }
+        .rank-2 { height: 80px; background: linear-gradient(135deg, #BDC3C7, #7F8C8D); border: 2px solid #95A5A6; }
+        .rank-3 { height: 65px; background: linear-gradient(135deg, #E67E22, #A04000); border: 2px solid #D35400; }
+
+        /* DAYS GRID */
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 25px; justify-items: center; }
+        .day { width: 65px; height: 65px; background: white; border: 2px solid #eee; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; cursor: pointer; font-size: 11px; position: relative; transition: all 0.3s; box-sizing: border-box; overflow: hidden; }
+        .day span { font-size: 12px; color: #888; margin-bottom: 2px; }
+        .day.completed { background: linear-gradient(135deg, var(--orange), #FF9F43); color: white; border: none; box-shadow: 0 5px 15px rgba(249,121,36,0.3); }
+        .day.completed::after { content: 'v'; font-size: 18px; font-weight: bold; }
+        .day.failed { background: linear-gradient(135deg, var(--red), #ff6b81); color: white; border: none; box-shadow: 0 5px 15px rgba(255,71,87,0.3); }
+        .day.failed::after { content: 'x'; font-size: 18px; font-weight: bold; }
+        .day.missed { background-color: #f1f2f6; border-color: #ddd; color: #999; cursor: default; }
+        .day.locked { background-color: #f1f2f6; color: #ced6e0; cursor: not-allowed; border-style: dashed; }
+        .day.today { background-color: white; border: 3px solid var(--orange); animation: pulse 2s infinite; color: var(--orange); font-weight: 900; }
+        @keyframes pulse { 0%{transform:scale(1)} 50%{transform:scale(1.05)} 100%{transform:scale(1)} }
+        .timer-bubble { font-size: 7px; background: var(--red); color: white; padding: 2px 6px; border-radius: 10px; border: 1.5px solid white; font-weight: 900; margin-top: 4px; box-shadow: 0 3px 6px rgba(255,0,0,0.2); }
+
+        /* STATUS BADGES */
+        .status-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 10px 0; }
+        .status-badge { background: var(--black); color: var(--orange); padding: 10px 14px; border-radius: 15px; font-weight: 900; font-size: 13px; border: 2px solid var(--orange); display: inline-block; }
+        .status-badge.rank { background: var(--orange); color: white; border: none; }
+        .status-badge.streak { background: linear-gradient(135deg, #ff6348, #ff4757); color: white; border: none; }
+        .status-badge.streak.cold { background: #dfe6e9; color: #999; border: none; }
+
+        /* PROGRESS BAR */
+        .progress-section { margin: 15px 0 5px; }
+        .progress-label { font-size: 12px; color: #999; font-weight: 700; margin-bottom: 5px; display: flex; justify-content: space-between; }
+        .prog-outer { background: #f0f0f0; border-radius: 20px; height: 12px; overflow: hidden; }
+        .prog-inner { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--orange), #FF9F43); transition: width 0.8s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden; }
+        .prog-inner::after { content: ''; position: absolute; top:0; left:0; right:0; bottom:0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shimmer 2s infinite; }
+        @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
+
+        /* QUOTE BOX */
+        .quote-box { background: linear-gradient(135deg, #fff8f0, #fff3e0); border: 1.5px solid rgba(249,121,36,0.2); border-radius: 20px; padding: 14px 18px; margin: 12px 0; text-align: right; }
+        .quote-text { font-size: 14px; color: #555; font-style: italic; line-height: 1.6; }
+        .quote-author { font-size: 11px; color: var(--orange); font-weight: 800; margin-top: 5px; }
+
+        /* ACHIEVEMENT TOAST */
+        #achievementToast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-150px); background: linear-gradient(135deg, #1A1A1A, #333); color: white; padding: 16px 24px; border-radius: 25px; z-index: 99999; box-shadow: 0 15px 40px rgba(0,0,0,0.4); text-align: center; min-width: 260px; transition: transform 0.5s cubic-bezier(0.175,0.885,0.32,1.275); border: 2px solid var(--orange); pointer-events: none; }
+        #achievementToast.show { transform: translateX(-50%) translateY(0); }
+        .toast-icon { font-size: 36px; margin-bottom: 4px; }
+        .toast-title { font-size: 11px; color: var(--orange); font-weight: 900; letter-spacing: 1px; }
+        .toast-msg { font-size: 16px; font-weight: 900; margin-top: 3px; }
+
+        /* FLOATING +1 */
+        .float-point { position: fixed; font-size: 38px; font-weight: 900; color: var(--orange); pointer-events: none; z-index: 99998; animation: floatUp 1.5s ease-out forwards; text-shadow: 0 2px 10px rgba(249,121,36,0.4); }
+        @keyframes floatUp { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-120px) scale(1.5)} }
+
+        /* MODALS */
+        #adminModal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; display:none; align-items:center; justify-content:center; }
+        .modal-content { background: white; padding: 30px; border-radius: 30px; width: 85%; max-width: 350px; text-align: center; }
+        .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        #uploadOverlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.98); z-index:9999; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+        .progress-container { width: 80%; background: #eee; border-radius: 10px; height: 15px; margin: 20px 0; overflow: hidden; }
+        .progress-bar { width: 0%; height: 100%; background: var(--orange); transition: width 0.2s; }
+
+        /* FORMS */
+        input, textarea { width: 100%; padding: 14px; margin: 10px 0; border: 2px solid #eee; border-radius: 15px; box-sizing: border-box; font-size: 16px; text-align: right; outline: none; }
+        input:focus { border-color: var(--orange); }
+        button { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--orange), #FF9F43); color: white; border: none; border-radius: 20px; font-weight: 900; cursor: pointer; font-size: 18px; margin-top: 10px; transition: 0.3s; box-shadow: 0 8px 20px rgba(249,121,36,0.2); }
+        button:active { transform: scale(0.97); }
+
+        section { display: none; }
+        section.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .video-btn { display: block; background: #ff0000; color: white; padding: 18px; border-radius: 20px; text-decoration: none; font-weight: bold; margin: 20px 0; font-size: 18px; box-shadow: 0 5px 15px rgba(255,0,0,0.3); transition: 0.3s; }
+
+        /* ADMIN */
+        .admin-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: white; margin-bottom: 8px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .admin-menu-btn { cursor: pointer; font-size: 22px; padding: 5px; color: #aaa; position: relative; }
+        .dropdown { position: absolute; left: 0; top: 100%; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 100; display: none; width: 220px; text-align: right; border: 1px solid #eee; overflow: hidden; }
+        .dropdown div { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; font-size: 13px; font-weight: 600; }
+        .dropdown div:hover { background: #fff5ee; color: var(--orange); }
+        .dropdown .user-creds { background: #f0f8ff; color: #444; font-size: 11px; line-height: 1.5; padding: 10px; text-align: right; border-top: 1px solid #e0e0e0; }
+        .small-del-btn { background: var(--red); color: white; width: auto; padding: 8px 12px; font-size: 12px; margin: 0; margin-left: 10px; border-radius: 10px; border: none; cursor: pointer; }
+        .bonus-controls { display: flex; align-items: center; justify-content: space-between; padding: 5px 15px; background: #f9f9f9; }
+        .bonus-btn { width: 35px; height: 35px; padding: 0; margin: 0; font-size: 20px; line-height: 35px; min-width: 35px; border-radius: 50%; border: none; color: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="achievementToast">
+    <div class="toast-icon" id="toastIcon">🏆</div>
+    <div class="toast-title">הישג חדש!</div>
+    <div class="toast-msg" id="toastMsg">כל הכבוד!</div>
+</div>
+
+<div id="uploadOverlay">
+    <div style="font-size: 80px;">🏀</div>
+    <h2>מעבד סרטון אימון...</h2>
+    <div class="progress-container"><div id="pFill" class="progress-bar"></div></div>
+    <p id="pPercent" style="font-weight:bold;color:var(--orange);font-size:20px">0%</p>
+    <p style="color:#999;font-size:13px">שולח למאמן...</p>
+</div>
+
+<div id="adminModal">
+    <div class="modal-content">
+        <h3 id="modalDayTitle">ניהול יום</h3>
+        <p>בחר פעולה עבור השחקן:</p>
+        <div class="modal-btns">
+            <button onclick="window.adminAction('v')" style="background:#2ecc71;margin:0">וי ✔</button>
+            <button onclick="window.adminAction('x')" style="background:#e74c3c;margin:0">איקס ✘</button>
+            <button onclick="window.adminAction('clear')" style="background:#95a5a6;margin:0;grid-column:span 2">נקה יום</button>
+        </div>
+        <button onclick="window.closeModal()" style="background:none;color:gray;box-shadow:none;border:none;text-decoration:underline;margin-top:15px">ביטול</button>
+    </div>
+</div>
+
+<div class="container">
+    <section id="welcome" class="active">
+        <div style="margin-top:60px;text-align:center">
+            <div class="logo-container">
+                <img src="logo2.jpeg" alt="לוגו" class="club-logo" onerror="this.src='https://i.ibb.co/v4m8YmS/logo.png'">
+                <div class="club-label">מועדון הכדורסל צעד וחצי</div>
+            </div>
+            <h1>טרום ליגה</h1>
+            <p style="font-weight:bold;color:#666">חודש של עבודה קשה!</p>
+            <button onclick="showSection('login')">כניסת שחקן</button>
+            <button style="background:transparent;color:var(--orange);border:2px solid var(--orange);box-shadow:none" onclick="showSection('signup')">הרשמה (שחקן חדש)</button>
+        </div>
+    </section>
+
+    <section id="login" class="card">
+        <h2>התחברות</h2>
+        <input type="text" id="lUser" placeholder="שם משתמש">
+        <input type="password" id="lPass" placeholder="סיסמה">
+        <button onclick="window.hLogin()">היכנס</button>
+        <button style="background:none;border:none;color:gray;text-decoration:underline;margin-top:20px;box-shadow:none" onclick="showSection('signup')">חדש כאן? צור חשבון</button>
+    </section>
+
+    <section id="signup" class="card">
+        <h2>הרשמה - טרום ליגה</h2>
+        <input type="text" id="sName" placeholder="שם מלא (עברית)">
+        <input type="password" id="sPass" placeholder="סיסמה (6 תווים לפחות)">
+        <button onclick="window.hSignup()">הירשם והתחל</button>
+        <button style="background:none;border:none;color:gray;text-decoration:underline;margin-top:20px;box-shadow:none" onclick="showSection('login')">יש לך כבר חשבון?</button>
+    </section>
+
+    <section id="instructions" class="card">
+        <div style="font-size:60px;margin-bottom:10px">⚠️</div>
+        <h2 style="color:#e65100;font-weight:900">אזהרה חשובה</h2>
+        <p style="background:#fff3e0;padding:25px;color:#e65100;font-weight:bold;border-radius:20px;font-size:18px;line-height:1.6;border:2px solid #ffcc80">
+            שימו לב, זה הסרטון של היום! לא לשכוח לצלם את עצמכם.<br><br>
+            הידעת? שליחת סרטון האימון למאמן בפרטי יכולה לזכות אותך בנקודת בונוס ולקבלת פידבק מקצועי!
+        </p>
+        <div id="dailyVideoArea" style="display:none;margin-bottom:20px">
+            <p>הסרטון של היום: 📺</p>
+            <a id="dailyVideoLink" href="#" target="_blank" class="video-btn">🎥 לחץ כאן לצפייה בסרטון</a>
+        </div>
+        <button onclick="window.enterDashboard()">ראיתי כבר, המשך לטבלה</button>
+    </section>
+
+    <section id="dashboard">
+        <div class="card" style="padding:15px">
+            <h2 id="uWelcomeMsg" style="margin-top:0;font-size:22px;color:var(--orange)">שלום! 🏀</h2>
+
+            <!-- ציטוט יומי -->
+            <div class="quote-box">
+                <div class="quote-text" id="quoteText">...</div>
+                <div class="quote-author" id="quoteAuthor"></div>
+            </div>
+
+            <!-- Status Badges -->
+            <div class="status-row">
+                <div id="uPointsBadge" class="status-badge">נקודות: 0</div>
+                <div id="uRankBadge" class="status-badge rank">מקום: --</div>
+                <div id="uStreakBadge" class="status-badge streak cold">🔥 0 ברצף</div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-section">
+                <div class="progress-label">
+                    <span>התקדמות באתגר</span>
+                    <span id="progressPct">0/30</span>
+                </div>
+                <div class="prog-outer">
+                    <div class="prog-inner" id="progFill" style="width:0%"></div>
+                </div>
+            </div>
+
+            <div id="podium" class="podium"></div>
+            <hr style="opacity:0.1">
+            <p id="instructionMsg" style="color:var(--orange);font-weight:800;margin-top:15px">לחץ על יום הנוכחי להעלאת סרטון 🏀</p>
+            <div class="grid" id="daysGrid"></div>
+        </div>
+        <button onclick="window.hLB()" id="adminBtn" style="display:none;background:var(--black)">ניהול קבוצה ⚙️</button>
+        <button onclick="location.reload()" style="background:#bbb;margin-top:10px;font-size:14px;padding:10px;box-shadow:none">התנתק</button>
+    </section>
+
+    <section id="leaderboard" class="card" style="padding:10px">
+        <h2 style="margin-top:10px">ניהול טרום ליגה 🏆</h2>
+        <div id="adminPodium" class="podium"></div>
+        <div class="card" style="margin-bottom:20px;background:#f0f8ff;padding:15px;border-radius:20px">
+            <h3 style="margin-top:0;font-size:18px">ניהול סרטון יומי</h3>
+            <input type="text" id="adminYtLink" placeholder="הדבק כאן קישור ליוטיוב">
+            <button onclick="window.updateDailyVideo()" style="background:var(--black);font-size:14px;padding:12px">עדכן קישור לכולם</button>
+        </div>
+        <div id="uList" style="text-align:right"></div>
+        <button onclick="window.showSection('dashboard')" style="background:var(--black);margin-top:20px">חזרה</button>
+    </section>
+</div>
+
+<input type="file" id="videoInput" accept="video/*" multiple style="display:none" onchange="window.startSimulatedUpload(this.files)">
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCdbCWGqL4BnT53VPzCfReSln_e56Sjva0",
+        authDomain: "basketballchallenge-cf685.firebaseapp.com",
+        projectId: "basketballchallenge-cf685",
+        storageBucket: "basketballchallenge-cf685.firebasestorage.app",
+        messagingSenderId: "587116639958",
+        appId: "1:587116639958:web:67a8c623bccfe6bacafb77",
+        measurementId: "G-4SY3Q931ED"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const COLLECTION = "users_trom_liga";
+
+    // שנה את שם ו-סיסמת מנהל לפי הצורך
+    const ADMIN_NAME = "אברהם";
+    const ADMIN_PASS = "123456";
+
+    // שנה תאריך התחלה לטרום ליגה!
+    const GLOBAL_START_DATE = new Date(2026, 2, 8, 0, 0, 0).getTime();
+    const END_OF_DAY_1 = new Date(2026, 2, 8, 23, 59, 59, 999).getTime();
+
+    const getAppNow = () => new Date();
+    let curU = null, activeU = null, isA = false, currentDayTs = null, adminTargetUid = null;
+
+    // ===== ציטוטים מוטיבציה =====
+    const QUOTES = [
+        { text: "הכדורסל הוא 90% מנטלי ו-10% פיזי.", author: "לארי בירד" },
+        { text: "אני נכשלתי שוב ושוב בחיים שלי. וזו הסיבה שהצלחתי.", author: "מייקל ג'ורדן" },
+        { text: "הדרך היחידה להיות שחקן טוב היא לאמן קשה.", author: "קובי בראיינט" },
+        { text: "המנצחים לא מצטדקים. מפסידנים מלאי תירוצים.", author: "שאקיל אוניל" },
+        { text: "כל יום שבו אתה מתאמן הוא יום שבו אתה מתקדם.", author: "לברון ג'יימס" },
+        { text: "ההבדל בין ממוצע למצוין הוא עבודה קשה.", author: "דירק נוביצקי" },
+        { text: "החלום שלך לא עובד אלא אם כן אתה עובד.", author: "מאג'יק ג'ונסון" },
+        { text: "אל תפחד להיכשל. היה מפחד לא לנסות.", author: "מייקל ג'ורדן" },
+        { text: "כשיש לך כישרון ועבודה קשה, כל דבר אפשרי.", author: "יאו מינג" },
+        { text: "כל אימון הוא הזדמנות להיות טוב יותר.", author: "קווין דוראנט" },
+        { text: "הכישלון הוא רק הזדמנות להתחיל מחדש בצורה חכמה יותר.", author: "הנרי פורד" },
+        { text: "גדולות לא מגיעות בקלות. עבוד עליהן.", author: "קרים עבדול-ג'בר" },
+    ];
+
+    function showDailyQuote() {
+        const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+        document.getElementById('quoteText').innerText = `"${q.text}"`;
+        document.getElementById('quoteAuthor').innerText = `— ${q.author}`;
+    }
+
+    // ===== SOUND (Web Audio API - no external library) =====
+    function playSound(type) {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            if (type === 'success') {
+                [523, 659, 784, 1047].forEach((freq, i) => {
+                    const o = ctx.createOscillator(), g = ctx.createGain();
+                    o.connect(g); g.connect(ctx.destination);
+                    o.type = 'sine';
+                    o.frequency.value = freq;
+                    const t = ctx.currentTime + i * 0.1;
+                    g.gain.setValueAtTime(0.25, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+                    o.start(t); o.stop(t + 0.3);
+                });
+            } else if (type === 'achievement') {
+                [523, 523, 523, 698, 880].forEach((freq, i) => {
+                    const o = ctx.createOscillator(), g = ctx.createGain();
+                    o.connect(g); g.connect(ctx.destination);
+                    o.type = 'triangle';
+                    o.frequency.value = freq;
+                    const t = ctx.currentTime + i * 0.12;
+                    g.gain.setValueAtTime(0.2, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+                    o.start(t); o.stop(t + 0.3);
+                });
+            }
+        } catch(e) {}
+    }
+
+    // ===== MEGA CONFETTI =====
+    function megaConfetti() {
+        const colors = ['#F97924', '#FFD700', '#FF9F43', '#ffffff', '#1A1A1A'];
+        const end = Date.now() + 2500;
+        (function frame() {
+            confetti({ particleCount: 7, angle: 60, spread: 55, origin: { x: 0 }, colors });
+            confetti({ particleCount: 7, angle: 120, spread: 55, origin: { x: 1 }, colors });
+            if (Date.now() < end) requestAnimationFrame(frame);
+        })();
+    }
+
+    // ===== FLOATING +1 =====
+    function spawnFloatingPoint() {
+        const el = document.createElement('div');
+        el.className = 'float-point';
+        el.innerText = '+1 🏀';
+        el.style.left = (35 + Math.random() * 30) + '%';
+        el.style.top = '45%';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1600);
+    }
+
+    // ===== ACHIEVEMENT SYSTEM =====
+    const ACHIEVEMENTS = [
+        { id: 'first',   check: (c, s) => c >= 1,  icon: '🏀', msg: 'יום ראשון הושלם! מעולה!' },
+        { id: 'streak3', check: (c, s) => s >= 3,  icon: '🔥', msg: '3 ימים ברצף! אש!' },
+        { id: 'streak5', check: (c, s) => s >= 5,  icon: '💪', msg: '5 ימים ברצף! מפוצץ!' },
+        { id: 'ten',     check: (c, s) => c >= 10, icon: '⭐', msg: '10 ימים הושלמו! מדהים!' },
+        { id: 'half',    check: (c, s) => c >= 15, icon: '🌟', msg: 'חצי אתגר! 15 ימים!' },
+        { id: 'twenty',  check: (c, s) => c >= 20, icon: '🚀', msg: '20 ימים! כמעט שם!' },
+        { id: 'streak10',check: (c, s) => s >= 10, icon: '🌪️', msg: '10 ימים ברצף! אגדי!' },
+        { id: 'done',    check: (c, s) => c >= 30, icon: '🏆', msg: 'כל 30 הימים! אגדת כדורסל!' },
+    ];
+
+    function checkAchievements(completedCount, streak) {
+        const shownKey = 'ach_tl_' + (curU?.uid || '');
+        const shown = JSON.parse(localStorage.getItem(shownKey) || '[]');
+        for (const ach of ACHIEVEMENTS) {
+            if (!shown.includes(ach.id) && ach.check(completedCount, streak)) {
+                shown.push(ach.id);
+                localStorage.setItem(shownKey, JSON.stringify(shown));
+                showAchievementToast(ach.icon, ach.msg);
+                playSound('achievement');
+                break;
+            }
+        }
+    }
+
+    function showAchievementToast(icon, msg) {
+        const toast = document.getElementById('achievementToast');
+        document.getElementById('toastIcon').innerText = icon;
+        document.getElementById('toastMsg').innerText = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    // ===== STREAK =====
+    function calcStreak(completedDates) {
+        if (!completedDates || completedDates.length === 0) return 0;
+        const dates = getDates();
+        const now = getAppNow();
+        const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const isPreDay1End = now.getTime() < END_OF_DAY_1;
+        const dayInCycle = isPreDay1End ? 0 : Math.floor((todayMidnight - GLOBAL_START_DATE) / 86400000) % 30;
+        let streak = 0;
+        for (let i = dayInCycle; i >= 0; i--) {
+            const ts = dates[i]?.getTime();
+            if (ts && completedDates.includes(ts)) streak++;
+            else break;
+        }
+        return streak;
+    }
+
+    // ===== PROGRESS BAR UPDATE =====
+    function updateProgressBar(u) {
+        const completed = (u.completedDates || []).length;
+        const pct = Math.round((completed / 30) * 100);
+        document.getElementById('progFill').style.width = pct + '%';
+        document.getElementById('progressPct').innerText = `${completed}/30`;
+    }
+
+    // ===== STREAK BADGE UPDATE =====
+    function updateStreakBadge(streak) {
+        const badge = document.getElementById('uStreakBadge');
+        if (streak >= 3) {
+            badge.classList.remove('cold');
+            const fire = streak >= 7 ? '🔥🔥' : '🔥';
+            badge.innerText = `${fire} ${streak} ברצף`;
+        } else {
+            badge.classList.add('cold');
+            badge.innerText = `🔥 ${streak} ברצף`;
+        }
+    }
+
+    // ===== HELPERS =====
+    function n2e(n) {
+        let clean = n.trim().toLowerCase(), hex = "";
+        for(let i = 0; i < clean.length; i++) hex += clean.charCodeAt(i).toString(16);
+        return "u_" + hex + "@tromlga.com";
+    }
+
+    function getDates() {
+        const dates = [], start = new Date(GLOBAL_START_DATE);
+        for(let i = 0; i < 30; i++) {
+            let d = new Date(start); d.setDate(start.getDate() + i); dates.push(d);
+        }
+        return dates;
+    }
+
+    function getRemainingTime() {
+        const now = getAppNow();
+        if (now.getTime() < END_OF_DAY_1) {
+            const diff = END_OF_DAY_1 - now.getTime();
+            const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+            return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+        const endOfDay = new Date(); endOfDay.setHours(23,59,59,999);
+        const d = endOfDay - now;
+        const h = Math.floor(d/3600000), m = Math.floor((d%3600000)/60000), s = Math.floor((d%60000)/1000);
+        return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    }
+
+    // ===== NAVIGATION =====
+    window.showSection = (id) => {
+        document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if (id !== 'dashboard') activeU = null;
+    };
+
+    // ===== LOGIN =====
+    window.hLogin = async () => {
+        const u = document.getElementById('lUser').value.trim(), p = document.getElementById('lPass').value;
+        if(u === ADMIN_NAME && p === ADMIN_PASS) {
+            isA = true; document.getElementById('adminBtn').style.display = 'block'; window.hLB(); return;
+        }
+        try {
+            const res = await signInWithEmailAndPassword(auth, n2e(u), p);
+            await loadD(res.user.uid);
+            await fetchDailyVideo();
+            showSection('instructions');
+        } catch(e) { alert("פרטים שגויים"); }
+    };
+
+    // ===== SIGNUP =====
+    window.hSignup = async () => {
+        const n = document.getElementById('sName').value.trim(), p = document.getElementById('sPass').value;
+        if(!n || p.length < 6) return alert("מלא שם וסיסמה (6 תווים לפחות)");
+        try {
+            const email = n2e(n);
+            const res = await createUserWithEmailAndPassword(auth, email, p);
+            const data = { fullName:n, password:p, points:0, bonusPoints:0, completedDates:[], failedDates:[], email, lastPointTimestamp:Date.now(), startDate:GLOBAL_START_DATE };
+            await setDoc(doc(db, COLLECTION, res.user.uid), data);
+            curU = { uid: res.user.uid, ...data };
+            await fetchDailyVideo();
+            showSection('instructions');
+        } catch(e) { alert("שגיאה: שם תפוס או נתונים שגויים"); }
+    };
+
+    // ===== DAILY VIDEO =====
+    async function fetchDailyVideo() {
+        const snap = await getDoc(doc(db, "configs", "trom_liga_video"));
+        if (snap.exists() && snap.data().url) {
+            const link = document.getElementById('dailyVideoLink');
+            if (link) { link.href = snap.data().url; document.getElementById('dailyVideoArea').style.display = 'block'; }
+        }
+    }
+
+    window.updateDailyVideo = async () => {
+        const url = document.getElementById('adminYtLink').value;
+        if (!url) return alert("הכנס קישור");
+        await setDoc(doc(db, "configs", "trom_liga_video"), { url });
+        alert("הקישור עודכן לכולם!");
+    };
+
+    // ===== ENTER DASHBOARD =====
+    window.enterDashboard = async () => {
+        activeU = curU;
+        await updateTop3AndRank();
+        renderG();
+        showDailyQuote();
+        updateProgressBar(activeU);
+        const streak = calcStreak(activeU.completedDates);
+        updateStreakBadge(streak);
+        showSection('dashboard');
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 }, colors: ['#F97924','#1A1A1A','#FFFFFF'] });
+        setInterval(updateTimers, 1000);
+    };
+
+    // ===== LOAD USER DATA =====
+    async function loadD(uid) {
+        const snap = await getDoc(doc(db, COLLECTION, uid));
+        if (snap.exists()) {
+            curU = { uid, ...snap.data() };
+            document.getElementById('uWelcomeMsg').innerText = "שלום, " + curU.fullName + "! 🏀";
+        }
+    }
+
+    // ===== RENDER DAYS GRID =====
+    function renderG(u = activeU || curU) {
+        if (!u) return;
+        const grid = document.getElementById('daysGrid');
+        grid.innerHTML = '';
+        const now = getAppNow();
+        const start = new Date(GLOBAL_START_DATE);
+        const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const isPreDay1End = now.getTime() < END_OF_DAY_1;
+        const dayInCycle = isPreDay1End ? 0 : Math.floor((todayMidnight - start.getTime()) / (1000*60*60*24)) % 30;
+        const dates = getDates();
+
+        dates.forEach((date, i) => {
+            const ts = date.getTime();
+            const done = (u.completedDates || []).includes(ts);
+            const failed = (u.failedDates || []).includes(ts);
+            let statusClass = "locked";
+            if (done) statusClass = "completed";
+            else if (failed) statusClass = "failed";
+            else if (i === dayInCycle) statusClass = "today";
+            else if (i < dayInCycle) statusClass = "missed";
+
+            const div = document.createElement('div');
+            div.className = `day ${statusClass}`;
+            div.id = `day-${ts}`;
+            div.innerHTML = `<span>יום ${i+1}</span>${date.toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'})}`;
+
+            if (statusClass === "today" && !done && !failed) {
+                div.innerHTML += `<div class="timer-bubble" id="timer-${ts}">${getRemainingTime()}</div>`;
+            }
+
+            if (isA) {
+                div.onclick = () => openAdminModal(ts, u.uid);
+            } else if (statusClass === "today" && !done && !failed) {
+                const officialStart = new Date(GLOBAL_START_DATE);
+                if (now.getTime() >= officialStart.getTime()) {
+                    div.onclick = () => { currentDayTs = ts; document.getElementById('videoInput').click(); };
+                }
+            }
+            grid.appendChild(div);
+        });
+    }
+
+    // ===== UPDATE TIMERS =====
+    function updateTimers() {
+        const dates = getDates();
+        const now = getAppNow();
+        const isPreDay1End = now.getTime() < END_OF_DAY_1;
+        const activeIdx = isPreDay1End ? 0 : Math.floor((now.getTime()-GLOBAL_START_DATE)/86400000) % 30;
+        const ts = dates[activeIdx]?.getTime();
+        if (ts) { const el = document.getElementById(`timer-${ts}`); if(el) el.innerText = getRemainingTime(); }
+    }
+
+    // ===== UPLOAD SIMULATION =====
+    window.startSimulatedUpload = async (files) => {
+        if (!files || files.length === 0) return;
+        if(!confirm(`האם אלו ${files.length} הסרטונים הנכונים?\n\nהידעת? שליחת סרטון למאמן בפרטי יכולה לזכות אותך בנקודת בונוס! להמשיך?`)) return;
+        const overlay = document.getElementById('uploadOverlay');
+        const fill = document.getElementById('pFill');
+        overlay.style.display = 'flex';
+        let progress = 0;
+        await new Promise(res => {
+            const interval = setInterval(() => {
+                progress += Math.random() * 25;
+                if (progress >= 100) { progress = 100; clearInterval(interval); res(); }
+                fill.style.width = progress + "%";
+                document.getElementById('pPercent').innerText = Math.round(progress) + "%";
+            }, 200);
+        });
+        overlay.style.display = 'none';
+        await completeDayFinal();
+    };
+
+    // ===== COMPLETE DAY =====
+    async function completeDayFinal() {
+        const targetU = activeU || curU;
+        const prevCount = (targetU.completedDates || []).length;
+        const newDates = [...(targetU.completedDates || []), currentDayTs];
+        await updateDoc(doc(db, COLLECTION, targetU.uid), { completedDates: newDates, lastPointTimestamp: Date.now() });
+        targetU.completedDates = newDates;
+
+        renderG();
+        await updateTop3AndRank();
+        updateProgressBar(targetU);
+        const streak = calcStreak(targetU.completedDates);
+        updateStreakBadge(streak);
+
+        // Effects!
+        megaConfetti();
+        playSound('success');
+        spawnFloatingPoint();
+
+        setTimeout(() => checkAchievements(newDates.length, streak), 1500);
+    }
+
+    // ===== ADMIN MODAL =====
+    window.openAdminModal = (ts, uid) => {
+        currentDayTs = ts; adminTargetUid = uid;
+        document.getElementById('modalDayTitle').innerText = "ניהול יום: " + new Date(ts).toLocaleDateString('he-IL');
+        document.getElementById('adminModal').style.display = 'flex';
+    };
+
+    window.closeModal = () => document.getElementById('adminModal').style.display = 'none';
+
+    window.adminAction = async (type) => {
+        const snap = await getDoc(doc(db, COLLECTION, adminTargetUid));
+        const data = snap.data();
+        let completed = data.completedDates || [], failed = data.failedDates || [];
+        completed = completed.filter(d => d !== currentDayTs);
+        failed = failed.filter(d => d !== currentDayTs);
+        if (type === 'v') { completed.push(currentDayTs); megaConfetti(); playSound('success'); }
+        else if (type === 'x') failed.push(currentDayTs);
+        await updateDoc(doc(db, COLLECTION, adminTargetUid), { completedDates: completed, failedDates: failed });
+        if (activeU && activeU.uid === adminTargetUid) {
+            activeU.completedDates = completed;
+            activeU.failedDates = failed;
+            renderG(activeU);
+            updateProgressBar(activeU);
+            updateStreakBadge(calcStreak(activeU.completedDates));
+        }
+        await updateTop3AndRank();
+        closeModal();
+    };
+
+    window.adminBonus = async (uid, amount) => {
+        const snap = await getDoc(doc(db, COLLECTION, uid));
+        await updateDoc(doc(db, COLLECTION, uid), { bonusPoints: (snap.data().bonusPoints || 0) + amount });
+        window.hLB();
+    };
+
+    window.delPlayer = async (uid) => {
+        if(confirm("למחוק שחקן?")) { await deleteDoc(doc(db, COLLECTION, uid)); window.hLB(); }
+    };
+
+    // ===== TOP 3 + RANK =====
+    async function updateTop3AndRank() {
+        const snap = await getDocs(collection(db, COLLECTION));
+        const users = [];
+        snap.forEach(d => {
+            const data = d.data();
+            const total = (data.completedDates?.length||0) + (data.bonusPoints||0) - (data.failedDates?.length||0);
+            users.push({uid:d.id, total, ...data});
+        });
+        users.sort((a,b) => (b.total - a.total) || (a.lastPointTimestamp - b.lastPointTimestamp));
+
+        const displayU = activeU || curU;
+        if (displayU) {
+            const myIdx = users.findIndex(u => u.uid === displayU.uid);
+            document.getElementById('uRankBadge').innerText = "מקום: " + (myIdx !== -1 ? "#"+(myIdx+1) : "--");
+            document.getElementById('uPointsBadge').innerText = "נקודות: " + (users[myIdx]?.total || 0);
+        }
+
+        const top = users.slice(0, 3);
+        [document.getElementById('podium'), document.getElementById('adminPodium')].forEach(p => {
+            if(!p) return;
+            p.innerHTML = '';
+            if(top[1]) p.innerHTML += createPodiumHTML(top[1], 2, "🥈");
+            if(top[0]) p.innerHTML += createPodiumHTML(top[0], 1, "🥇");
+            if(top[2]) p.innerHTML += createPodiumHTML(top[2], 3, "🥉");
+        });
+    }
+
+    function createPodiumHTML(user, rank, icon) {
+        const streak = calcStreak(user.completedDates || []);
+        const fire = streak >= 3 ? ' 🔥' : '';
+        return `<div class="podium-item">
+            <div class="podium-name">${user.fullName}${fire}</div>
+            <div class="podium-box rank-${rank}">
+                <span style="font-size:22px">${icon}</span>
+                <span style="font-size:11px">${user.total} נק'</span>
+            </div>
+        </div>`;
+    }
+
+    // ===== LEADERBOARD =====
+    window.hLB = async () => {
+        showSection('leaderboard');
+        await updateTop3AndRank();
+        const snap = await getDocs(query(collection(db, COLLECTION)));
+        const list = document.getElementById('uList');
+        list.innerHTML = '';
+        const users = [];
+        snap.forEach(d => {
+            const data = d.data();
+            const total = (data.completedDates?.length||0) + (data.bonusPoints||0) - (data.failedDates?.length||0);
+            users.push({id:d.id, total, ...data});
+        });
+        users.sort((a,b) => b.total - a.total);
+        const medals = ['🥇','🥈','🥉'];
+        users.forEach((u, idx) => {
+            const streak = calcStreak(u.completedDates || []);
+            const div = document.createElement('div');
+            div.className = 'admin-row';
+            div.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+                    <div style="text-align:right">
+                        <b>${medals[idx]||''} ${u.fullName}</b> — ${u.total} נק'
+                        ${streak >= 3 ? `<span style="font-size:11px;color:#ff6348;font-weight:800"> 🔥${streak} ברצף</span>` : ''}
+                    </div>
+                    <div style="display:flex;align-items:center">
+                        <button class="small-del-btn" onclick="window.delPlayer('${u.id}')">מחק</button>
+                        <div class="admin-menu-btn" onclick="const el=document.getElementById('m-${u.id}');el.style.display=el.style.display==='block'?'none':'block';event.stopPropagation()">⋮
+                            <div class="dropdown" id="m-${u.id}">
+                                <div onclick="window.viewPlayer('${u.id}')">📅 לוח שחקן (וי/איקס)</div>
+                                <div class="bonus-controls">
+                                    <span>בונוס:</span>
+                                    <button class="bonus-btn" style="background:#2ecc71" onclick="window.adminBonus('${u.id}',1)">+</button>
+                                    <button class="bonus-btn" style="background:#e74c3c" onclick="window.adminBonus('${u.id}',-1)">-</button>
+                                </div>
+                                <div class="user-creds">👤 משתמש: ${u.fullName}<br>🔑 סיסמה: ${u.password}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            list.appendChild(div);
+        });
+    };
+
+    window.viewPlayer = async (uid) => {
+        const snap = await getDoc(doc(db, COLLECTION, uid));
+        const data = snap.data(); data.uid = uid;
+        activeU = data;
+        document.getElementById('uWelcomeMsg').innerText = "ניהול לוח: " + data.fullName;
+        renderG(activeU);
+        updateProgressBar(activeU);
+        updateStreakBadge(calcStreak(activeU.completedDates));
+        showSection('dashboard');
+    };
+</script>
+</body>
+</html>
