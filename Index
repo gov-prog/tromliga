@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>שי לחג – מעלה אפריים מחזור יב</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Assistant:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F7F2E7;
+    --cream-dark: #EDE4D3;
+    --wine: #7A2E3A;
+    --wine-dark: #5E212B;
+    --olive: #6B7A4F;
+    --gold: #C9A227;
+    --ink: #2B2320;
+    --ink-soft: #6B5F55;
+    --line: #D9CDB8;
+    --radius-s: 6px;
+    --radius-m: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Assistant', sans-serif;
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 28px 18px 60px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .badge {
+    display: inline-block;
+    background: var(--wine);
+    color: var(--cream);
+    font-family: 'Rubik', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 4px 14px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+    letter-spacing: 0.3px;
+  }
+  h1 {
+    font-family: 'Rubik', sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    margin: 0 0 6px;
+    color: var(--wine-dark);
+  }
+  .sub {
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .tabs {
+    display: flex;
+    background: var(--cream-dark);
+    border-radius: var(--radius-m);
+    padding: 4px;
+    margin-bottom: 18px;
+    gap: 4px;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px;
+    border-radius: var(--radius-s);
+    font-family: 'Rubik', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: background .15s ease, color .15s ease;
+    user-select: none;
+  }
+  .tab.active {
+    background: var(--wine);
+    color: var(--cream);
+  }
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadein .25s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-m);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+  input[type=text] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-s);
+    font-size: 16px;
+    font-family: 'Assistant', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+  }
+  input[type=text]:focus {
+    outline: none;
+    border-color: var(--wine);
+  }
+  .row { display: flex; gap: 8px; margin-top: 10px; }
+  .row input { flex: 1; }
+  button {
+    font-family: 'Rubik', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    border: none;
+    border-radius: var(--radius-s);
+    padding: 12px 18px;
+    cursor: pointer;
+    transition: filter .15s ease;
+  }
+  button:hover { filter: brightness(0.95); }
+  .btn-primary { background: var(--wine); color: var(--cream); }
+  .btn-ghost { background: var(--cream-dark); color: var(--ink); }
+  .hint {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  .result {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: var(--radius-s);
+    font-size: 15px;
+    line-height: 1.5;
+    display: none;
+  }
+  .result.show { display: block; }
+  .result.found { background: #FBEAEA; border: 1.5px solid var(--wine); color: var(--wine-dark); }
+  .result.clear { background: #EEF2E7; border: 1.5px solid var(--olive); color: #3F4A2D; }
+  .result strong { font-family: 'Rubik', sans-serif; }
+
+  .near-list {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--line);
+  }
+  .near-item {
+    padding: 8px 0;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .near-item b { color: var(--ink); font-weight: 600; }
+
+  .list-title {
+    font-family: 'Rubik', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    margin: 0 0 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .count {
+    background: var(--gold);
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 999px;
+  }
+  .addr-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+  }
+  .addr-item:last-child { border-bottom: none; }
+  .addr-meta { color: var(--ink-soft); font-size: 12px; margin-top: 2px; }
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 13px;
+    padding: 4px 8px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .empty {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 14px;
+    padding: 20px 0;
+  }
+  .footer-note {
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 22px;
+    line-height: 1.6;
+  }
+  .status-line {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+    min-height: 16px;
+  }
+  textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-s);
+    font-size: 15px;
+    font-family: 'Assistant', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    resize: vertical;
+    min-height: 64px;
+  }
+  textarea:focus { outline: none; border-color: var(--wine); }
+  .field { margin-top: 14px; }
+  .gps-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .gps-status {
+    font-size: 13px;
+    color: var(--olive);
+    font-weight: 600;
+  }
+  .warn-box {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: var(--radius-s);
+    background: #FBEAEA;
+    border: 1.5px solid var(--wine);
+    color: var(--wine-dark);
+    font-size: 14px;
+    line-height: 1.5;
+    display: none;
+  }
+  .warn-box.show { display: block; }
+  .warn-box .near-list { border-top-color: var(--wine); }
+  .warn-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .btn-danger { background: var(--wine); color: var(--cream); }
+  .btn-cancel { background: #fff; color: var(--ink-soft); border: 1.5px solid var(--line); }
+  .addr-desc {
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin-top: 2px;
+    line-height: 1.4;
+  }
+  .addr-map-link {
+    color: var(--wine);
+    font-size: 12px;
+    text-decoration: underline;
+  }
+  .export-btn {
+    background: none;
+    border: none;
+    color: var(--wine);
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="badge">מעלה אפריים · מחזור יב׳</span>
+    <h1>שי לחג לתושבים</h1>
+    <p class="sub">רשימה משותפת של הבתים שכבר קיבלו שי — כדי שלא נכפיל חלוקה</p>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="check">בדיקת כתובת</div>
+    <div class="tab" data-tab="add">רישום כתובת</div>
+  </div>
+
+  <div class="panel active" id="panel-check">
+    <div class="card">
+      <label for="checkInput">הקלידו את הכתובת שאתם עומדים ללכת אליה</label>
+      <input type="text" id="checkInput" placeholder="לדוגמה: הגפן 12">
+      <div class="hint">גם אם ההקלדה לא מדויקת ב-100%, נציג כתובות דומות שכבר נרשמו.</div>
+      <div class="result" id="checkResult"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-add">
+    <div class="card">
+      <label for="addInput">כתובת הבית שבו חילקתם שי</label>
+      <input type="text" id="addInput" placeholder="לדוגמה: הגפן 12">
+      <div class="warn-box" id="dupWarning"></div>
+
+      <div class="field">
+        <label for="addDescription">תיאור המקום (אופציונלי)</label>
+        <textarea id="addDescription" placeholder="לדוגמה: שער ירוק, קומה 2, ליד המכולת"></textarea>
+      </div>
+
+      <div class="gps-row">
+        <button class="btn-ghost" id="gpsBtn" type="button">צרפו מיקום GPS</button>
+        <span class="gps-status" id="gpsStatus"></span>
+      </div>
+
+      <div class="row" style="margin-top:16px;">
+        <button class="btn-primary" id="addBtn" style="width:100%;">הוסיפו לרשימה</button>
+      </div>
+      <div class="status-line" id="addStatus"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="list-title">
+      <span>כל הכתובות שנרשמו</span>
+      <span class="count" id="listCount">0</span>
+    </div>
+    <div id="addrList"><div class="empty">עדיין לא נרשמו כתובות</div></div>
+    <div style="margin-top:12px; text-align:center;">
+      <button class="export-btn" id="exportBtn">ייצוא גיבוי לקובץ</button>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    הרשימה משותפת לכל מי שפותח את הקישור הזה — כל מתנדב רואה את מה שאחרים רשמו.
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'shai-lachag-addresses';
+const MY_IDS_KEY = 'my-added-ids';
+let addresses = []; // {id, text, description, location:{lat,lng}|null, addedAt}
+let myIds = new Set(); // ids of addresses *this* device/user added — personal, not shared
+let pendingGps = null; // {lat, lng} captured but not yet saved
+let pendingConfirmType = null; // 'exact' | 'near' | null — waiting for user to confirm add-anyway
+
+function normalize(s) {
+  return s
+    .trim()
+    .replace(/["'׳״.,\-]/g, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp = Array.from({length: m + 1}, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i-1] === b[j-1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i-1][j] + 1,
+        dp[i][j-1] + 1,
+        dp[i-1][j-1] + cost
+      );
+    }
+  }
+  return dp[m][n];
+}
+
+function similarityThreshold(len) {
+  if (len <= 4) return 1;
+  if (len <= 8) return 2;
+  return 3;
+}
+
+async function loadMyIds() {
+  try {
+    const result = await window.storage.get(MY_IDS_KEY, false);
+    myIds = new Set(result ? JSON.parse(result.value) : []);
+  } catch (e) {
+    myIds = new Set();
+  }
+}
+
+async function saveMyIds() {
+  try {
+    await window.storage.set(MY_IDS_KEY, JSON.stringify([...myIds]), false);
+  } catch (e) {
+    console.error('שגיאת שמירת מזהים אישיים', e);
+  }
+}
+
+async function loadAddresses() {
+  try {
+    const result = await window.storage.get(STORAGE_KEY, true);
+    addresses = result ? JSON.parse(result.value) : [];
+  } catch (e) {
+    addresses = [];
+  }
+  await loadMyIds();
+  renderList();
+}
+
+async function saveAddresses() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(addresses), true);
+  } catch (e) {
+    console.error('שגיאת שמירה', e);
+  }
+}
+
+function renderList() {
+  const listEl = document.getElementById('addrList');
+  const countEl = document.getElementById('listCount');
+  countEl.textContent = addresses.length;
+  if (addresses.length === 0) {
+    listEl.innerHTML = '<div class="empty">עדיין לא נרשמו כתובות</div>';
+    return;
+  }
+  const sorted = [...addresses].sort((a, b) => b.addedAt - a.addedAt);
+  listEl.innerHTML = sorted.map(item => {
+    const date = new Date(item.addedAt);
+    const timeStr = date.toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const descHtml = item.description ? `<div class="addr-desc">${escapeHtml(item.description)}</div>` : '';
+    const mapHtml = item.location ? `<div><a class="addr-map-link" href="https://www.google.com/maps?q=${item.location.lat},${item.location.lng}" target="_blank" rel="noopener">פתחו במפה</a></div>` : '';
+    const canDelete = myIds.has(item.id);
+    const deleteHtml = canDelete
+      ? `<button class="del-btn" data-id="${item.id}">מחק</button>`
+      : `<span class="addr-meta" style="white-space:nowrap;">נוסף ע"י מתנדב אחר</span>`;
+    return `
+      <div class="addr-item">
+        <div>
+          <div>${escapeHtml(item.text)}</div>
+          ${descHtml}
+          ${mapHtml}
+          <div class="addr-meta">נרשם ב-${timeStr}</div>
+        </div>
+        ${deleteHtml}
+      </div>
+    `;
+  }).join('');
+
+  listEl.querySelectorAll('.del-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      addresses = addresses.filter(a => a.id !== id);
+      myIds.delete(id);
+      await saveAddresses();
+      await saveMyIds();
+      renderList();
+    });
+  });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+function findDuplicateInfo(text) {
+  const norm = normalize(text);
+  if (!norm) return null;
+  const exact = addresses.find(a => normalize(a.text) === norm);
+  if (exact) return { type: 'exact', matches: [exact] };
+  const threshold = similarityThreshold(norm.length);
+  const near = addresses
+    .map(a => ({ item: a, dist: levenshtein(norm, normalize(a.text)) }))
+    .filter(r => r.dist > 0 && r.dist <= threshold)
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, 5);
+  if (near.length > 0) return { type: 'near', matches: near.map(r => r.item) };
+  return null;
+}
+
+function renderDupWarning() {
+  const input = document.getElementById('addInput');
+  const warnBox = document.getElementById('dupWarning');
+  const text = input.value.trim();
+  const dup = text ? findDuplicateInfo(text) : null;
+
+  if (!dup) {
+    warnBox.className = 'warn-box';
+    warnBox.innerHTML = '';
+    pendingConfirmType = null;
+    return;
+  }
+
+  pendingConfirmType = dup.type;
+  const listHtml = `<div class="near-list">${dup.matches.map(m => `<div class="near-item">${dup.type === 'exact' ? 'רשומה קיימת: ' : 'דומה ל: '}<b>${escapeHtml(m.text)}</b></div>`).join('')}</div>`;
+
+  warnBox.className = 'warn-box show';
+  if (dup.type === 'exact') {
+    warnBox.innerHTML = `<strong>כבר חילקו שי בכתובת הזו!</strong>${listHtml}
+      <div class="warn-actions">
+        <button class="btn-danger" id="confirmAddBtn" type="button">להוסיף בכל זאת</button>
+      </div>`;
+  } else {
+    warnBox.innerHTML = `<strong>נמצאה כתובת דומה — כדאי לבדוק שזה לא אותו בית</strong>${listHtml}
+      <div class="warn-actions">
+        <button class="btn-danger" id="confirmAddBtn" type="button">זו כתובת שונה, הוסיפו בכל זאת</button>
+      </div>`;
+  }
+
+  document.getElementById('confirmAddBtn').addEventListener('click', () => {
+    doAddAddress(true);
+  });
+}
+
+document.getElementById('addInput').addEventListener('input', renderDupWarning);
+
+// GPS
+document.getElementById('gpsBtn').addEventListener('click', () => {
+  const gpsStatus = document.getElementById('gpsStatus');
+  if (!navigator.geolocation) {
+    gpsStatus.textContent = 'המכשיר לא תומך באיתור מיקום';
+    return;
+  }
+  gpsStatus.textContent = 'מאתר מיקום...';
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      pendingGps = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      gpsStatus.textContent = 'מיקום צורף ✓';
+    },
+    () => {
+      gpsStatus.textContent = 'לא הצלחנו לאתר מיקום';
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+});
+
+// Add address
+async function doAddAddress(confirmedAnyway) {
+  const input = document.getElementById('addInput');
+  const descInput = document.getElementById('addDescription');
+  const status = document.getElementById('addStatus');
+  const warnBox = document.getElementById('dupWarning');
+  const gpsStatus = document.getElementById('gpsStatus');
+  const text = input.value.trim();
+
+  if (!text) {
+    status.textContent = 'נא להקליד כתובת';
+    return;
+  }
+  if (pendingConfirmType && !confirmedAnyway) {
+    status.textContent = 'יש התאמה קיימת — אשרו למעלה אם בכל זאת רוצים להוסיף';
+    return;
+  }
+
+  const newId = Date.now().toString() + Math.random().toString(36).slice(2);
+  addresses.push({
+    id: newId,
+    text,
+    description: descInput.value.trim(),
+    location: pendingGps,
+    addedAt: Date.now()
+  });
+  myIds.add(newId);
+  await saveAddresses();
+  await saveMyIds();
+  renderList();
+
+  input.value = '';
+  descInput.value = '';
+  pendingGps = null;
+  pendingConfirmType = null;
+  gpsStatus.textContent = '';
+  warnBox.className = 'warn-box';
+  warnBox.innerHTML = '';
+
+  status.textContent = 'נוסף בהצלחה ✓';
+  setTimeout(() => { status.textContent = ''; }, 2500);
+}
+
+document.getElementById('addBtn').addEventListener('click', () => doAddAddress(false));
+
+document.getElementById('addInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') e.preventDefault();
+});
+
+// Export backup
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(addresses, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'shai-lachag-גיבוי-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Check address
+function checkAddress() {
+  const input = document.getElementById('checkInput');
+  const resultEl = document.getElementById('checkResult');
+  const text = input.value.trim();
+  if (!text) {
+    resultEl.className = 'result';
+    resultEl.innerHTML = '';
+    return;
+  }
+  const norm = normalize(text);
+  const exact = addresses.find(a => normalize(a.text) === norm);
+
+  if (exact) {
+    resultEl.className = 'result show found';
+    resultEl.innerHTML = `<strong>כבר חילקו שי בכתובת הזו!</strong><br>"${escapeHtml(exact.text)}" נרשם ברשימה.`;
+    return;
+  }
+
+  // fuzzy matches
+  const threshold = similarityThreshold(norm.length);
+  const near = addresses
+    .map(a => ({ item: a, dist: levenshtein(norm, normalize(a.text)) }))
+    .filter(r => r.dist > 0 && r.dist <= threshold)
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, 5);
+
+  if (near.length > 0) {
+    resultEl.className = 'result show found';
+    resultEl.innerHTML = `<strong>לא נמצאה התאמה מדויקת, אבל יש כתובות דומות שכבר נרשמו:</strong>
+      <div class="near-list">
+        ${near.map(r => `<div class="near-item">כמעט התאמה: <b>${escapeHtml(r.item.text)}</b></div>`).join('')}
+      </div>
+      <div style="margin-top:8px;">כדאי לוודא שלא מדובר באותו בית לפני שממשיכים.</div>`;
+  } else {
+    resultEl.className = 'result show clear';
+    resultEl.innerHTML = `<strong>עדיין לא חילקו שי בכתובת הזו</strong> — אפשר להמשיך, ואל תשכחו לרשום אותה אחרי החלוקה.`;
+  }
+}
+
+document.getElementById('checkInput').addEventListener('input', checkAddress);
+
+loadAddresses();
+</script>
+</body>
+</html>
